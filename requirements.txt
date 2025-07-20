@@ -1,0 +1,4 @@
+Flask
+cohere
+python-dotenv
+requests

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>DS.RESEARCH.BOT-001</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="../static/DS_logo.png">
+    <style>
+         :root {
+            --bg: #121212;
+            --text: #f2f2f2;
+            --card: #1e1e1e;
+            --primary: #00ffd5;
+        }
+        
+        * {
+            font-weight: lighter;
+        }
+        
+        body {
+            margin: 0;
+            padding: 2rem;
+            font-family: 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+        
+        .container {
+            max-width: 700px;
+            margin: auto;
+        }
+        
+        h1 {
+            color: var(--primary);
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        input[type="text"] {
+            margin-right: 2%;
+            width: 95%;
+            padding: 1rem;
+            border: 2px solid white;
+            background: none;
+            color: #fff;
+            font-size: 1rem;
+        }
+        
+        button {
+            padding: 0.8rem 1.5rem;
+            margin-top: 1rem;
+            border: none;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s ease;
+        }
+        
+        button:hover {
+            background-color: #00c5aa;
+        }
+        
+        .copy-btn {
+            margin-top: 5%;
+            margin-left: 87%;
+            background: #fff;
+            border: none;
+            padding: 0.3rem 0.6rem;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+        
+        .spinner {
+            display: none;
+            margin-top: 2rem;
+            text-align: center;
+        }
+        
+        .spinner div {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            margin: 0 5px;
+            background: var(--primary);
+            animation: bounce 0.6s infinite alternate;
+        }
+        
+        .spinner div:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .spinner div:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes bounce {
+            to {
+                transform: translateY(-15px);
+            }
+        }
+        
+        @media (max-width: 600px) {
+            input[type="text"] {
+                width: 93%;
+            }
+        }
+        
+        #output {
+            display: block;
+            white-space: pre-wrap;
+            overflow-wrap: break-word;
+            overflow-y: auto;
+            max-height: 400px;
+            padding: 1.5rem;
+            color: #fff;
+            margin-top: 2rem;
+            position: relative;
+            border: 2px solid white;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>DS.RESEARCH.BOT-001</h1>
+        <input type="text" id="queryInput" placeholder="Enter your research query..." />
+        <h4>Note: this bot only gives output in a structured text summary.</h4>
+        <button id="summarizeBtn">Summarize</button>
+
+        <div id="output-container" style="position: relative;">
+            <button class="copy-btn" id="copy-btn">Copy</button>
+            <pre id="output"></pre>
+        </div>
+
+        <div class="spinner" id="spinner">
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+        <h3>Made by DataSniper-001</h3>
+    </div>
+
+    <script>
+        const summarizeBtn = document.getElementById("summarizeBtn");
+        const queryInput = document.getElementById("queryInput");
+        const outputBox = document.getElementById("output");
+
+        summarizeBtn.addEventListener("click", async() => {
+            const query = queryInput.value.trim();
+            if (!query) {
+                outputBox.innerText = "Please enter a query.";
+                return;
+            }
+
+            outputBox.innerText = "⏳ Summarizing...";
+
+            try {
+                const res = await fetch("/summarize", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        query
+                    }),
+                });
+
+                const data = await res.json();
+
+                if (data.summary) {
+                    outputBox.innerText = data.summary;
+                } else if (data.error) {
+                    outputBox.innerText = "❌ Error: " + data.error;
+                } else {
+                    outputBox.innerText = "❌ Unexpected response from server.";
+                }
+            } catch (err) {
+                outputBox.innerText = "❌ Failed to fetch summary.";
+                console.error(err);
+            }
+        });
+
+        document.getElementById("copy-btn").addEventListener("click", function() {
+            const text = document.getElementById("output").innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                this.innerText = "Copied!";
+                setTimeout(() => this.innerText = "Copy", 2000);
+            }).catch((err) => {
+                console.error("Copy failed:", err);
+                this.innerText = "❌ Failed";
+                setTimeout(() => this.innerText = "Copy", 2000);
+            });
+        });
+    </script>
+</body>
+
+</html>
