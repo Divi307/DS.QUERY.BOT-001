@@ -1,7 +1,6 @@
 from flask import Flask, render_template, request, jsonify
 import os
 from datetime import datetime
-import google.generativeai as genai
 import cohere
 
 COHERE_API_KEY = os.getenv("COHERE_API_KEY") or "your-cohere-api-key"
