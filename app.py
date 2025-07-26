@@ -4,10 +4,9 @@ from datetime import datetime
 import google.generativeai as genai
 import cohere
 
-# Load environment variables (for API keys)
 COHERE_API_KEY = os.getenv("COHERE_API_KEY") or "your-cohere-api-key"
 
-# Initialize Gemini & Cohere
+# Initialize Cohere
 co = cohere.Client(COHERE_API_KEY)
 
 app = Flask(__name__)
@@ -100,12 +99,11 @@ def summarize():
 
         return jsonify({"summary": summary})
     except Exception as e:
-        print("🔥 Error while summarizing:", e)
+        print("Error while summarizing:", e)
         return jsonify({"error": str(e)}), 500
 
 
 # Run server
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    print(f"🚀 Server running on: http://127.0.0.1:{port}")
-    app.run(host="0.0.0.0", port=port, debug=True)
+    port = int(os.environ.get("PORT", 5000)) 
+    app.run(host="0.0.0.0", port=port)
