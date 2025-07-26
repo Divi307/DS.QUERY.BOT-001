@@ -2,15 +2,15 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <title>DS.RESEARCH.BOT-001</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/x-icon" href="../static/DS_logo.png">
+    <meta charset="UTF-8" />
+    <title>DS.QUERY.BOT-001</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/x-icon" href="../static/DS_logo.png" />
     <style>
          :root {
             --bg: #121212;
             --text: #f2f2f2;
-            --card: #1e1e1e;
+            --card: #121212;
             --primary: #00ffd5;
         }
         
@@ -47,6 +47,15 @@
             font-size: 1rem;
         }
         
+        select {
+            width: 100%;
+            padding: 0.8rem;
+            margin-top: 0.5rem;
+            background: var(--card);
+            color: var(--text);
+            border: 2px solid white;
+        }
+        
         button {
             padding: 0.8rem 1.5rem;
             margin-top: 1rem;
@@ -61,42 +70,66 @@
             background-color: #00c5aa;
         }
         
-        .copy-btn {
-            margin-top: 5%;
-            margin-left: 87%;
+        .copy-btn,
+        .word-count {
             background: #fff;
+            color: #000;
             border: none;
             padding: 0.3rem 0.6rem;
-            cursor: pointer;
             font-size: 0.8rem;
         }
         
-        .spinner {
+        .copy-btn {
+            padding-top: 6px;
+            margin-bottom: 15px;
+        }
+        
+        .copy-row {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+            margin-bottom: 2px;
+        }
+        
+        #output {
+            position: relative;
+            display: block;
+            white-space: pre-wrap;
+            overflow-wrap: break-word;
+            overflow-y: auto;
+            min-height: 68px;
+            max-height: 400px;
+            padding: 1.5rem;
+            color: #fff;
+            margin-top: 0.5rem;
+            border: 2px solid white;
+            background-color: var(--card);
+            transition: all 0.3s ease-in-out;
+        }
+        
+        .spinner-inside {
             display: none;
-            margin-top: 2rem;
-            text-align: center;
+            justify-content: center;
+            align-items: center;
+            position: absolute;
+            inset: 0;
+            background-color: rgba(18, 18, 18, 0.8);
         }
         
-        .spinner div {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            margin: 0 5px;
-            background: var(--primary);
-            animation: bounce 0.6s infinite alternate;
+        .hourglass {
+            width: 30px;
+            height: 30px;
+            border: 4px solid var(--primary);
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
         }
         
-        .spinner div:nth-child(2) {
-            animation-delay: 0.2s;
-        }
-        
-        .spinner div:nth-child(3) {
-            animation-delay: 0.4s;
-        }
-        
-        @keyframes bounce {
-            to {
-                transform: translateY(-15px);
+        @keyframes spin {
+            100% {
+                transform: rotate(360deg);
             }
         }
         
@@ -104,40 +137,50 @@
             input[type="text"] {
                 width: 93%;
             }
-        }
-        
-        #output {
-            display: block;
-            white-space: pre-wrap;
-            overflow-wrap: break-word;
-            overflow-y: auto;
-            max-height: 400px;
-            padding: 1.5rem;
-            color: #fff;
-            margin-top: 2rem;
-            position: relative;
-            border: 2px solid white;
+            .copy-row {
+                align-items: flex-end;
+            }
+            .copy-btn {
+                margin-bottom: 2px;
+            }
         }
     </style>
 </head>
 
 <body>
     <div class="container">
-        <h1>DS.RESEARCH.BOT-001</h1>
-        <input type="text" id="queryInput" placeholder="Enter your research query..." />
-        <h4>Note: this bot only gives output in a structured text summary.</h4>
-        <button id="summarizeBtn">Summarize</button>
+        <h1>DS.QUERY.BOT-001</h1>
+
+        <label for="promptSelect">Prompt Type:</label>
+        <select id="promptSelect">
+      <option value="brief">📌 Brief</option>
+      <option value="deep">🔬 Deep Analysis</option>
+      <option value="custom">📝 Custom Prompt</option>
+    </select><br><br>
+
+        <label for="languageSelect">Language (default: English):</label>
+        <select id="languageSelect">
+      <option value="english">English</option>
+      <option value="hindi">Hindi</option>
+    </select><br><br>
+
+        <label for="queryInput">Query:</label>
+        <input type="text" id="queryInput" placeholder="Ask me something..." /><br>
+
+        <button id="summarizeBtn">Analyze</button>
+
+        <div class="copy-row">
+            <span class="word-count" id="word-count">0 words</span>
+            <button class="copy-btn" id="copy-btn">Copy</button>
+        </div>
 
         <div id="output-container" style="position: relative;">
-            <button class="copy-btn" id="copy-btn">Copy</button>
             <pre id="output"></pre>
+            <div class="spinner-inside" id="spinner">
+                <div class="hourglass"></div>
+            </div>
         </div>
 
-        <div class="spinner" id="spinner">
-            <div></div>
-            <div></div>
-            <div></div>
-        </div>
         <h3>Made by DataSniper-001</h3>
     </div>
 
@@ -145,44 +188,57 @@
         const summarizeBtn = document.getElementById("summarizeBtn");
         const queryInput = document.getElementById("queryInput");
         const outputBox = document.getElementById("output");
+        const spinner = document.getElementById("spinner");
+        const wordCount = document.getElementById("word-count");
 
         summarizeBtn.addEventListener("click", async() => {
             const query = queryInput.value.trim();
+            const promptType = document.getElementById("promptSelect").value;
+            const language = document.getElementById("languageSelect").value;
+
             if (!query) {
                 outputBox.innerText = "Please enter a query.";
                 return;
             }
 
-            outputBox.innerText = "⏳ Summarizing...";
+            outputBox.innerText = "";
+            wordCount.innerText = "0 words";
+            spinner.style.display = "flex";
 
             try {
                 const res = await fetch("/summarize", {
                     method: "POST",
                     headers: {
-                        "Content-Type": "application/json",
+                        "Content-Type": "application/json"
                     },
                     body: JSON.stringify({
-                        query
+                        query,
+                        promptType,
+                        language
                     }),
                 });
 
                 const data = await res.json();
+                spinner.style.display = "none";
 
                 if (data.summary) {
                     outputBox.innerText = data.summary;
+                    const words = data.summary.trim().split(/\s+/).length;
+                    wordCount.innerText = `${words} word${words !== 1 ? 's' : ''}`;
                 } else if (data.error) {
                     outputBox.innerText = "❌ Error: " + data.error;
                 } else {
                     outputBox.innerText = "❌ Unexpected response from server.";
                 }
             } catch (err) {
+                spinner.style.display = "none";
                 outputBox.innerText = "❌ Failed to fetch summary.";
                 console.error(err);
             }
         });
 
         document.getElementById("copy-btn").addEventListener("click", function() {
-            const text = document.getElementById("output").innerText;
+            const text = outputBox.innerText;
             navigator.clipboard.writeText(text).then(() => {
                 this.innerText = "Copied!";
                 setTimeout(() => this.innerText = "Copy", 2000);
